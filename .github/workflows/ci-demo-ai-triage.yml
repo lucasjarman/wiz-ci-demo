@@ -1,0 +1,52 @@
+name: ci-demo AI triage (risk fixture, inert)
+
+# DELIBERATELY RISKY, AND DELIBERATELY INERT. This file exists so Wiz Code's CI/CD security posture has
+# something realistic to find. The job below can never run: `if: ${{ false }}`. Nothing here deploys.
+# Do not "fix" it (AGENTS.md, Intentional findings). The working bot is claude.yml.
+#
+# What each risk is meant to surface in Wiz (control names are from the demo tenant, not docs):
+#   - AI coding agent with a shell tool, run from external triggers, with a write token  -> AI-in-CI findings
+#   - pull_request_target + checkout of the untrusted PR head                            -> dangerous trigger
+#   - permissions: write-all (incl. id-token)                                            -> excessive CI job permissions
+#   - docker/setup-buildx-action@master (third-party action on a branch)                  -> unpinned third-party action
+#   - tj-actions/changed-files@v44 (CVE-2025-30066; Wiz matches v44, not v45.0.7)       -> vulnerable CI dependency
+#   - untrusted issue/comment text interpolated into `run:`                              -> script injection
+#   - a fake token committed in env                                                      -> secret in workflow
+# No cloud auth step exists, so even if this ran it could not reach GCP.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  triage:
+    if: ${{ false }} # inert fixture
+    runs-on: ubuntu-24.04
+    env:
+      # Random, never issued, not a credential (AGENTS.md rule 9).
+      DEMO_DEPLOY_TOKEN: ghp_10TJR0QzPkYh8UsPgHDAdViSeR1RYwuKkB9h
+    steps:
+      - uses: actions/checkout@main
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: tj-actions/changed-files@v44
+
+      - uses: docker/setup-buildx-action@master
+
+      - name: Announce
+        run: |
+          echo "Triage requested: ${{ github.event.issue.title }} ${{ github.event.comment.body }}"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.DEMO_ANTHROPIC_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: "*"
+          prompt: "Triage and fix this request: ${{ github.event.issue.title }} ${{ github.event.comment.body }}"
+          claude_args: --allowedTools Bash,Read,Write,Edit
