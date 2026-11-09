@@ -3,7 +3,7 @@ name: Claude Code Remediation
 # DELIBERATELY RISKY DEMO FIXTURE, modelled on the Wiz demo tenant's "Claude Code Remediation" workflow.
 # It is a realistic, high-privilege AI coding agent workflow on external triggers, which is exactly what
 # Wiz Code flags in a PUBLIC repository. The agent cannot do anything useful: the ANTHROPIC_API_KEY
-# secret is a placeholder, there are no cloud credentials, and the repo holds nothing worth stealing.
+# secret holds a revoked key, there are no cloud credentials, and the repo holds nothing worth stealing.
 # Do not add real secrets to this repo. Do not "fix" this file. See AGENTS.md.
 
 on:
